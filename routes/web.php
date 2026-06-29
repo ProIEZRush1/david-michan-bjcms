@@ -48,4 +48,9 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
+Route::get('/dbcheck', function () {
+    try { return response()->json(['ok'=>true,'users'=>\App\Models\User::count(),'conn'=>config('database.default'),'host'=>config('database.connections.'.config('database.default').'.host'),'db'=>config('database.connections.'.config('database.default').'.database')]); }
+    catch (\Throwable $e) { return response()->json(['ok'=>false,'error'=>$e->getMessage(),'conn'=>config('database.default'),'host'=>config('database.connections.'.config('database.default').'.host'),'db'=>config('database.connections.'.config('database.default').'.database')], 500); }
+});
+
 require __DIR__.'/auth.php';
