@@ -42,16 +42,19 @@ chmod -R ug+rwX storage bootstrap/cache "$DB_DIR" 2>/dev/null || true
 ) &
 
 # 5. Migrate + seed in the BACKGROUND, best-effort with a retry loop, so a
-#    slow/unready database never blocks or crashes serving.
+#    slow/unready database never blocks or crashes serving. The loop only stops
+#    once BOTH migrate AND seed succeed: seeding is idempotent (updateOrCreate),
+#    so retrying is safe, and this guarantees the admin user exists. Otherwise a
+#    transient seed failure against a not-yet-ready Postgres would leave users=0
+#    forever and the /health gate (users >= 1) would fail the whole deploy.
 (
     i=1
-    while [ "$i" -le 40 ]; do
-        if php artisan migrate --force 2>&1; then
-            php artisan db:seed --force 2>&1 || true
-            echo "[entrypoint] migrate/seed completed on attempt $i"
+    while [ "$i" -le 60 ]; do
+        if php artisan migrate --force 2>&1 && php artisan db:seed --force 2>&1; then
+            echo "[entrypoint] migrate+seed completed on attempt $i"
             break
         fi
-        echo "[entrypoint] migrate attempt $i failed; retrying in 3s..."
+        echo "[entrypoint] migrate/seed attempt $i failed; retrying in 3s..."
         i=$((i + 1))
         sleep 3
     done
