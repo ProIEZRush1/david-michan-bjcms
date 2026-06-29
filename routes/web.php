@@ -1,10 +1,15 @@
 <?php
 
+use App\Http\Controllers\ClienteController;
+use App\Http\Controllers\ConversacionController;
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\FaqController;
+use App\Http\Controllers\NumeroController;
+use App\Http\Controllers\PedidoController;
+use App\Http\Controllers\PlanController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\WhatsAppController;
-use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
-use Inertia\Inertia;
 
 // Admin/bot panel: the root goes straight to the panel (login if needed), never a generic page.
 Route::get('/', fn () => redirect()->route('dashboard'));
@@ -19,12 +24,24 @@ Route::get('/health', function () {
     }
 });
 
-Route::get('/dashboard', function () {
-    return Inertia::render('Dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
+Route::get('/dashboard', [DashboardController::class, 'index'])
+    ->middleware(['auth', 'verified'])
+    ->name('dashboard');
 
 Route::middleware('auth')->group(function () {
     Route::get('/conectar', [WhatsAppController::class, 'conectar'])->name('conectar');
+
+    // Módulos del negocio (CRUD real, datos persistentes).
+    Route::resource('planes', PlanController::class)->except('show');
+    Route::resource('inventario', NumeroController::class)->parameters(['inventario' => 'inventario'])->except('show');
+    Route::resource('pedidos', PedidoController::class)->except('show');
+    Route::resource('clientes', ClienteController::class)->except('show');
+    Route::resource('faqs', FaqController::class)->except('show');
+
+    // Conversaciones del bot + escalado a agente humano.
+    Route::get('/conversaciones', [ConversacionController::class, 'index'])->name('conversaciones.index');
+    Route::patch('/conversaciones/{conversacion}/liberar', [ConversacionController::class, 'liberar'])->name('conversaciones.liberar');
+    Route::patch('/conversaciones/{conversacion}/escalar', [ConversacionController::class, 'escalar'])->name('conversaciones.escalar');
 
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');

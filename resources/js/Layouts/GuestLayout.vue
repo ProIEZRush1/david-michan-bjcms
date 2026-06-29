@@ -4,7 +4,7 @@ import ApplicationLogo from '@/Components/ApplicationLogo.vue';
 import { Link, usePage } from '@inertiajs/vue3';
 
 const page = usePage();
-const name = computed(() => page.props.name || 'Overcloud');
+const name = computed(() => page.props.name || 'David Michan');
 </script>
 
 <template>

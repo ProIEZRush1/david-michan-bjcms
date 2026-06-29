@@ -2,18 +2,23 @@
 
 namespace Tests\Feature;
 
-// use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 class ExampleTest extends TestCase
 {
     /**
-     * A basic test example.
+     * El root redirige al panel (login si no hay sesión), nunca una página genérica.
      */
-    public function test_the_application_returns_a_successful_response(): void
+    public function test_the_root_redirects_to_the_panel(): void
     {
-        $response = $this->get('/');
+        $this->get('/')->assertRedirect();
+    }
 
-        $response->assertStatus(200);
+    /**
+     * El health check público responde ok.
+     */
+    public function test_health_check_responds(): void
+    {
+        $this->get('/health')->assertOk()->assertJson(['ok' => true]);
     }
 }

@@ -12,6 +12,9 @@ return new class extends Migration
             $table->id();
             $table->string('nombre')->nullable();
             $table->string('telefono')->unique();
+            $table->string('email')->nullable();
+            $table->string('ciudad')->nullable();
+            $table->text('notas')->nullable();
             $table->timestamps();
         });
     }

@@ -18,8 +18,8 @@ const props = defineProps({
 });
 
 const page = usePage();
-const name = computed(() => page.props.name || 'Overcloud');
-const initial = computed(() => name.value.trim().charAt(0).toUpperCase() || 'O');
+const name = computed(() => page.props.name || 'David Michan');
+const initial = computed(() => name.value.trim().charAt(0).toUpperCase() || 'D');
 </script>
 
 <template>

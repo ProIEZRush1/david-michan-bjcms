@@ -33,6 +33,27 @@ const userInitials = computed(() => {
     }
     return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
 });
+
+// Menú lateral con TODOS los módulos del negocio de David Michan.
+const navItems = [
+    { label: 'Inicio', route: 'dashboard', emoji: '🏠' },
+    { label: 'Planes', route: 'planes.index', emoji: '📱' },
+    { label: 'Inventario', route: 'inventario.index', emoji: '🔢' },
+    { label: 'Pedidos', route: 'pedidos.index', emoji: '🧾' },
+    { label: 'Clientes', route: 'clientes.index', emoji: '👥' },
+    { label: 'Preguntas frecuentes', route: 'faqs.index', emoji: '💬' },
+    { label: 'Conversaciones', route: 'conversaciones.index', emoji: '🤖' },
+    { label: 'Conectar WhatsApp', route: 'conectar', emoji: '🔗' },
+];
+
+const isActive = (name) => {
+    try {
+        const base = name.replace(/\.index$/, '');
+        return route().current(name) || route().current(base + '.*');
+    } catch (e) {
+        return false;
+    }
+};
 </script>
 
 <template>
@@ -61,56 +82,21 @@ const userInitials = computed(() => {
             </div>
 
             <!-- Nav -->
-            <nav class="flex-1 space-y-1 px-4 py-4">
+            <nav class="flex-1 space-y-1 overflow-y-auto px-4 py-4">
                 <Link
-                    :href="route('dashboard')"
+                    v-for="item in navItems"
+                    :key="item.route"
+                    :href="route(item.route)"
                     :class="[
                         'flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold transition',
-                        route().current('dashboard')
+                        isActive(item.route)
                             ? 'bg-gradient-to-r from-[#7c3aed] to-[#c026d3] text-white shadow-md shadow-fuchsia-500/20'
                             : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900',
                     ]"
                 >
-                    <svg
-                        class="h-5 w-5"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                        stroke-width="1.8"
-                    >
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
-                        />
-                    </svg>
-                    Inicio
+                    <span class="text-lg leading-none">{{ item.emoji }}</span>
+                    {{ item.label }}
                 </Link>
-                <Link
-                    :href="route('conectar')"
-                    :class="[
-                        'flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold transition',
-                        route().current('conectar')
-                            ? 'bg-gradient-to-r from-[#7c3aed] to-[#c026d3] text-white shadow-md shadow-fuchsia-500/20'
-                            : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900',
-                    ]"
-                >
-                    <svg
-                        class="h-5 w-5"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                        stroke-width="1.8"
-                    >
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            d="M3 20l1.3-3.9A8 8 0 1 1 7.9 19.7L3 20z"
-                        />
-                    </svg>
-                    Conectar WhatsApp
-                </Link>
-                <!-- El menú se amplía por cliente según los módulos instalados. -->
             </nav>
 
             <!-- Footer credit -->
@@ -222,16 +208,12 @@ const userInitials = computed(() => {
             >
                 <div class="space-y-1 px-4 py-3">
                     <ResponsiveNavLink
-                        :href="route('dashboard')"
-                        :active="route().current('dashboard')"
+                        v-for="item in navItems"
+                        :key="item.route"
+                        :href="route(item.route)"
+                        :active="isActive(item.route)"
                     >
-                        Inicio
-                    </ResponsiveNavLink>
-                    <ResponsiveNavLink
-                        :href="route('conectar')"
-                        :active="route().current('conectar')"
-                    >
-                        Conectar WhatsApp
+                        {{ item.emoji }} {{ item.label }}
                     </ResponsiveNavLink>
                 </div>
                 <div class="border-t border-slate-200 px-4 py-4">
@@ -255,6 +237,12 @@ const userInitials = computed(() => {
 
             <!-- Page content -->
             <main class="px-4 py-8 sm:px-6 lg:px-8">
+                <div
+                    v-if="page.props.flash?.success"
+                    class="mx-auto mb-6 max-w-7xl rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm font-medium text-green-700 shadow-sm"
+                >
+                    ✅ {{ page.props.flash.success }}
+                </div>
                 <slot />
             </main>
         </div>

@@ -1,50 +1,89 @@
 <script setup>
 import { computed } from 'vue';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
-import { Head, usePage } from '@inertiajs/vue3';
+import { Head, Link, usePage } from '@inertiajs/vue3';
+
+const props = defineProps({
+    metrics: { type: Object, default: () => ({}) },
+    ultimosPedidos: { type: Array, default: () => [] },
+});
 
 const page = usePage();
-
-const businessName = computed(() => page.props.name ?? 'Mi Negocio');
+const businessName = computed(() => page.props.name ?? 'David Michan');
 const userFirstName = computed(() => {
     const name = (page.props.auth?.user?.name ?? '').trim();
     return name ? name.split(/\s+/)[0] : '';
 });
 
-const stats = [
+const money = (cents) =>
+    '$' + ((cents ?? 0) / 100).toLocaleString('es-MX', { minimumFractionDigits: 0 });
+
+const m = computed(() => props.metrics ?? {});
+
+const modulos = computed(() => [
     {
-        label: 'Clientes activos',
-        value: '—',
-        hint: 'Tus contactos registrados',
+        label: 'Planes de telefonía',
+        value: m.value.planes ?? 0,
+        hint: `${m.value.planesActivos ?? 0} activos`,
+        route: 'planes.index',
+        emoji: '📱',
         gradient: 'from-[#7c3aed] to-[#a855f7]',
-        icon: 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z',
     },
     {
-        label: 'Pedidos del mes',
-        value: '—',
-        hint: 'Actividad reciente',
+        label: 'Inventario de números',
+        value: m.value.numeros ?? 0,
+        hint: `${m.value.numerosDisponibles ?? 0} disponibles`,
+        route: 'inventario.index',
+        emoji: '🔢',
         gradient: 'from-[#a21caf] to-[#c026d3]',
-        icon: 'M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293A1 1 0 005.414 17H17M17 17a2 2 0 100 4 2 2 0 000-4zM9 19a2 2 0 11-4 0 2 2 0 014 0z',
     },
     {
-        label: 'Ingresos',
-        value: '—',
-        hint: 'Total acumulado',
+        label: 'Pedidos',
+        value: m.value.pedidos ?? 0,
+        hint: `${m.value.pedidosAbiertos ?? 0} en proceso`,
+        route: 'pedidos.index',
+        emoji: '🧾',
         gradient: 'from-[#7c3aed] to-[#c026d3]',
-        icon: 'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z',
     },
     {
-        label: 'Tareas pendientes',
-        value: '—',
-        hint: 'Por completar',
+        label: 'Clientes',
+        value: m.value.clientes ?? 0,
+        hint: 'Registrados',
+        route: 'clientes.index',
+        emoji: '👥',
         gradient: 'from-[#c026d3] to-[#db2777]',
-        icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4',
     },
-];
+    {
+        label: 'Preguntas frecuentes',
+        value: m.value.faqs ?? 0,
+        hint: 'Activas en el bot',
+        route: 'faqs.index',
+        emoji: '💬',
+        gradient: 'from-[#7c3aed] to-[#a855f7]',
+    },
+    {
+        label: 'Conversaciones',
+        value: m.value.conversaciones ?? 0,
+        hint: `${m.value.enEspera ?? 0} con asesor`,
+        route: 'conversaciones.index',
+        emoji: '🤖',
+        gradient: 'from-[#a21caf] to-[#c026d3]',
+    },
+]);
+
+const estadoColor = (estado) =>
+    ({
+        iniciado: 'bg-slate-100 text-slate-600',
+        en_pago: 'bg-amber-100 text-amber-700',
+        pagado: 'bg-blue-100 text-blue-700',
+        numero_asignado: 'bg-violet-100 text-violet-700',
+        entregado: 'bg-green-100 text-green-700',
+        cancelado: 'bg-rose-100 text-rose-700',
+    })[estado] ?? 'bg-slate-100 text-slate-600';
 </script>
 
 <template>
-    <Head title="Inicio" />
+    <Head title="Panel" />
 
     <AuthenticatedLayout>
         <template #header>
@@ -58,119 +97,128 @@ const stats = [
             <section
                 class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#7c3aed] to-[#c026d3] p-8 text-white shadow-xl shadow-fuchsia-500/20 sm:p-10"
             >
-                <div
-                    class="pointer-events-none absolute -right-16 -top-16 h-64 w-64 rounded-full bg-white/10 blur-2xl"
-                ></div>
-                <div
-                    class="pointer-events-none absolute -bottom-20 -left-10 h-56 w-56 rounded-full bg-fuchsia-300/20 blur-2xl"
-                ></div>
+                <div class="pointer-events-none absolute -right-16 -top-16 h-64 w-64 rounded-full bg-white/10 blur-2xl"></div>
+                <div class="pointer-events-none absolute -bottom-20 -left-10 h-56 w-56 rounded-full bg-fuchsia-300/20 blur-2xl"></div>
                 <div class="relative">
                     <p class="text-sm font-medium uppercase tracking-widest text-white/70">
-                        Bienvenido a tu sistema
+                        Bot de ventas por WhatsApp
                     </p>
                     <h1 class="mt-3 text-3xl font-extrabold leading-tight sm:text-4xl">
                         Hola<span v-if="userFirstName">, {{ userFirstName }}</span> 👋
                     </h1>
                     <p class="mt-3 max-w-2xl text-base text-white/85">
-                        Este es el panel de
-                        <span class="font-semibold">{{ businessName }}</span>.
-                        Desde aquí podrás gestionar tu negocio, dar seguimiento a tu
-                        actividad y mantener todo organizado en un solo lugar.
+                        Bienvenido al panel de <span class="font-semibold">{{ businessName }}</span>.
+                        Administra tus planes, inventario de líneas, pedidos y la conversación
+                        de tu bot vendedor de líneas de teléfono — todo en un solo lugar.
                     </p>
+                    <div class="mt-6 flex flex-wrap gap-3">
+                        <Link
+                            :href="route('conectar')"
+                            class="inline-flex items-center gap-2 rounded-xl bg-white px-4 py-2 text-sm font-semibold text-[#7c3aed] shadow-lg transition hover:bg-white/90"
+                        >
+                            🔗 Conectar WhatsApp
+                        </Link>
+                        <Link
+                            :href="route('pedidos.index')"
+                            class="inline-flex items-center gap-2 rounded-xl border border-white/40 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/10"
+                        >
+                            Ver pedidos
+                        </Link>
+                    </div>
                 </div>
             </section>
 
-            <!-- Stat cards -->
+            <!-- Ingresos destacados -->
+            <section class="grid grid-cols-1 gap-5 sm:grid-cols-3">
+                <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+                    <p class="text-sm font-semibold text-slate-500">Ingresos confirmados</p>
+                    <p class="mt-2 text-3xl font-extrabold text-slate-800">{{ money(m.ingresos) }}</p>
+                    <p class="mt-1 text-xs text-slate-400">Pedidos pagados, asignados y entregados</p>
+                </div>
+                <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+                    <p class="text-sm font-semibold text-slate-500">Líneas disponibles</p>
+                    <p class="mt-2 text-3xl font-extrabold text-slate-800">{{ m.numerosDisponibles ?? 0 }}</p>
+                    <p class="mt-1 text-xs text-slate-400">Listas para asignar en el inventario</p>
+                </div>
+                <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+                    <p class="text-sm font-semibold text-slate-500">Chats con asesor</p>
+                    <p class="mt-2 text-3xl font-extrabold text-slate-800">{{ m.enEspera ?? 0 }}</p>
+                    <p class="mt-1 text-xs text-slate-400">Conversaciones escaladas a un humano</p>
+                </div>
+            </section>
+
+            <!-- Módulos -->
             <section>
-                <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">
-                    <div
-                        v-for="stat in stats"
-                        :key="stat.label"
+                <h3 class="mb-4 text-lg font-bold text-slate-800">Módulos del sistema</h3>
+                <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
+                    <Link
+                        v-for="mod in modulos"
+                        :key="mod.label"
+                        :href="route(mod.route)"
                         class="group rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg"
                     >
                         <div class="flex items-start justify-between">
                             <span
-                                :class="[
-                                    'flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br text-white shadow-md',
-                                    stat.gradient,
-                                ]"
+                                :class="['flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br text-2xl shadow-md', mod.gradient]"
                             >
-                                <svg
-                                    class="h-6 w-6"
-                                    fill="none"
-                                    viewBox="0 0 24 24"
-                                    stroke="currentColor"
-                                    stroke-width="1.8"
-                                >
-                                    <path
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                        :d="stat.icon"
-                                    />
-                                </svg>
+                                {{ mod.emoji }}
+                            </span>
+                            <span class="text-sm font-semibold text-[#7c3aed] opacity-0 transition group-hover:opacity-100">
+                                Administrar →
                             </span>
                         </div>
-                        <p class="mt-4 text-3xl font-extrabold text-slate-800">
-                            {{ stat.value }}
-                        </p>
-                        <p class="mt-1 text-sm font-semibold text-slate-600">
-                            {{ stat.label }}
-                        </p>
-                        <p class="mt-0.5 text-xs text-slate-400">{{ stat.hint }}</p>
-                    </div>
+                        <p class="mt-4 text-3xl font-extrabold text-slate-800">{{ mod.value }}</p>
+                        <p class="mt-1 text-sm font-semibold text-slate-600">{{ mod.label }}</p>
+                        <p class="mt-0.5 text-xs text-slate-400">{{ mod.hint }}</p>
+                    </Link>
                 </div>
             </section>
 
-            <!-- Welcome / next steps -->
-            <section class="grid grid-cols-1 gap-6 lg:grid-cols-3">
-                <div
-                    class="rounded-2xl border border-slate-200 bg-white p-8 shadow-sm lg:col-span-2"
-                >
-                    <h3 class="text-lg font-bold text-slate-800">
-                        Tu sistema está listo
-                    </h3>
-                    <p class="mt-2 text-sm leading-relaxed text-slate-600">
-                        Hemos preparado el panel de
-                        <span class="font-semibold text-slate-800">{{ businessName }}</span>
-                        para que empieces a trabajar. A medida que se activen nuevos
-                        módulos, aparecerán aquí y en el menú lateral.
-                    </p>
-                    <div class="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
-                        <div class="rounded-xl bg-slate-50 p-4">
-                            <p class="text-sm font-semibold text-slate-700">
-                                Personaliza tu perfil
-                            </p>
-                            <p class="mt-1 text-xs text-slate-500">
-                                Actualiza tus datos desde el menú de tu cuenta.
-                            </p>
-                        </div>
-                        <div class="rounded-xl bg-slate-50 p-4">
-                            <p class="text-sm font-semibold text-slate-700">
-                                Explora tu panel
-                            </p>
-                            <p class="mt-1 text-xs text-slate-500">
-                                Tus métricas y herramientas vivirán en esta pantalla.
-                            </p>
-                        </div>
-                    </div>
+            <!-- Últimos pedidos -->
+            <section class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
+                <div class="mb-4 flex items-center justify-between">
+                    <h3 class="text-lg font-bold text-slate-800">Últimos pedidos</h3>
+                    <Link :href="route('pedidos.index')" class="text-sm font-semibold text-[#7c3aed] hover:text-[#c026d3]">
+                        Ver todos
+                    </Link>
                 </div>
 
-                <div
-                    class="flex flex-col justify-between rounded-2xl border border-slate-200 bg-gradient-to-br from-slate-900 to-slate-800 p-8 text-white shadow-sm"
-                >
-                    <div>
-                        <h3 class="text-lg font-bold">¿Necesitas ayuda?</h3>
-                        <p class="mt-2 text-sm text-slate-300">
-                            Estamos para acompañarte. Cualquier ajuste o nueva función
-                            que necesites, lo resolvemos por ti.
-                        </p>
-                    </div>
-                    <p class="mt-6 text-xs text-slate-400">
-                        Plataforma impulsada por
-                        <span class="font-semibold text-slate-200">Overcloud</span>
-                    </p>
+                <div v-if="ultimosPedidos.length" class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-slate-200 text-sm">
+                        <thead>
+                            <tr class="text-left text-xs uppercase tracking-wide text-slate-400">
+                                <th class="px-3 py-2">Cliente</th>
+                                <th class="px-3 py-2">Plan</th>
+                                <th class="px-3 py-2">Línea</th>
+                                <th class="px-3 py-2">Total</th>
+                                <th class="px-3 py-2">Estado</th>
+                                <th class="px-3 py-2">Fecha</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100">
+                            <tr v-for="p in ultimosPedidos" :key="p.id" class="text-slate-700">
+                                <td class="px-3 py-3 font-medium">{{ p.cliente || '—' }}</td>
+                                <td class="px-3 py-3">{{ p.plan || '—' }}</td>
+                                <td class="px-3 py-3">{{ p.numero || '—' }}</td>
+                                <td class="px-3 py-3">{{ money(p.total) }}</td>
+                                <td class="px-3 py-3">
+                                    <span :class="['inline-flex rounded-full px-2.5 py-1 text-xs font-semibold', estadoColor(p.estado)]">
+                                        {{ p.estado_label }}
+                                    </span>
+                                </td>
+                                <td class="px-3 py-3 text-xs text-slate-400">{{ p.creado }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
+                <p v-else class="py-8 text-center text-sm text-slate-400">
+                    Aún no hay pedidos. En cuanto tu bot cierre una venta, aparecerá aquí.
+                </p>
             </section>
+
+            <p class="text-center text-xs text-slate-400">
+                Desarrollado por <span class="font-semibold text-slate-500">Overcloud</span>
+            </p>
         </div>
     </AuthenticatedLayout>
 </template>

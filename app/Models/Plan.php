@@ -13,17 +13,28 @@ class Plan extends Model
         'nombre',
         'precio',
         'descripcion',
+        'datos',
+        'minutos',
+        'sms',
+        'tipo',
+        'vigencia_dias',
         'activo',
         'orden',
     ];
 
     protected $casts = [
         'precio' => 'int',
+        'vigencia_dias' => 'int',
         'activo' => 'bool',
     ];
 
     public function pedidos(): HasMany
     {
         return $this->hasMany(Pedido::class);
+    }
+
+    public function numeros(): HasMany
+    {
+        return $this->hasMany(Numero::class);
     }
 }
