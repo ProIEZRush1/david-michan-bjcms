@@ -59,9 +59,22 @@ chmod -R ug+rwX storage bootstrap/cache "$DB_DIR" 2>/dev/null || true
         sleep 3
     done
 ) &
+SEED_PID=$!
 
 # 6. Cache config (uses the exported APP_KEY). Best effort.
 php artisan config:cache || true
+
+# 6b. Give migrate+seed a bounded window to finish BEFORE we start accepting traffic, so the
+#     deploy's /health gate (which expects users >= 1) sees an already-seeded DB on its first
+#     poll instead of racing the background seed — the common failure mode when Postgres takes
+#     a few seconds to become ready (vs. instant local sqlite). This NEVER blocks longer than
+#     the window: if the DB is still not ready we serve anyway and the loop above keeps retrying
+#     (seed is idempotent). kill -0 just checks whether the seeder is still alive.
+w=0
+while [ "$w" -lt 45 ] && kill -0 "$SEED_PID" 2>/dev/null; do
+    sleep 1
+    w=$((w + 1))
+done
 
 # 7. Serve under an auto-respawn loop: if a request ever crashes the dev server, it restarts
 #    immediately, so the app is never permanently down (no `set -e`, so the loop always continues).
